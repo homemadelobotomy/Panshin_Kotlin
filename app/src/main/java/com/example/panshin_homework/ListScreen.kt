@@ -2,8 +2,10 @@ package com.example.panshin_homework
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 
 
 import androidx.compose.foundation.layout.aspectRatio
@@ -16,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -34,7 +37,7 @@ import androidx.compose.ui.unit.sp
 
 
 @Composable
-fun ListScreen(dataList: List<String>, addItem: () -> Unit) {
+fun ListScreen(dataList: List<String>, addItem: () -> Unit,deleteItem:() -> Unit)  {
 
     val currentOrientationLandscape =
         (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
@@ -51,18 +54,29 @@ fun ListScreen(dataList: List<String>, addItem: () -> Unit) {
                 }
             }
 
-
-            FloatingActionButton (
-                onClick = addItem,
-                modifier = Modifier
-                    .padding(10.dp)
-                    .align(Alignment.CenterHorizontally),
-                containerColor = colorResource(R.color.light_purple)
-            ) {
-                Icon(Icons.Filled.Add, "Добавить")
-            }
-
+    Row  (modifier = Modifier
+        .fillMaxWidth()
+        , horizontalArrangement = Arrangement.Center,
+        ) {
+        FloatingActionButton(
+            onClick = deleteItem,
+            modifier = Modifier
+                .padding(10.dp),
+            containerColor = colorResource(R.color.light_purple)
+        ) {
+            Icon(Icons.Filled.Clear, "Удалить")
         }
+        FloatingActionButton(
+            onClick = addItem,
+            modifier = Modifier
+                .padding(10.dp),
+            containerColor = colorResource(R.color.light_purple)
+        ) {
+            Icon(Icons.Filled.Add, "Добавить")
+        }
+    }
+        }
+
     }
 
 
