@@ -1,5 +1,7 @@
 
 package com.example.panshin_homework
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
@@ -16,13 +18,18 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 
+
 import androidx.compose.material3.Text
+
 import androidx.compose.runtime.*
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
+
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.layout.ContentScale
 
 import androidx.compose.ui.platform.LocalContext
@@ -49,6 +56,7 @@ import kotlinx.coroutines.flow.update
         }
     }
 }*/
+
 class ImageViewModel(
     private val requestController: RequestController
 ) : ViewModel() {
@@ -73,7 +81,7 @@ class ImageViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-
+                //Запустить на IO потоке
                 //val result =  requestController.requestImage(perPage)
                 val result =  requestController.requestImage(_page.value,perPage)
                 if(result is Result.Ok){
@@ -97,14 +105,20 @@ class ImageViewModel(
     }
 }
 @Composable
-fun MainScreen() {
-    val imageViewModel = remember {
-        ImageViewModel(RetrofitController("https://api.unsplash.com/"))
-    }
+fun MainScreen(imageViewModel: ImageViewModel, onImageClick: (ImageItem) -> Unit) {
+
+//    var images = rememberSaveable(stateSaver = listSaver<ImageItem, String>(
+//        save = {list: List<ImageItem> -> list.map(it.urls.rawUrl)},
+//        restore = {urlist -> urlist.map {ImageItem(Origin(it)) }}
+//    )) {mutableStateListOf()}
+
     val images by imageViewModel.images.collectAsState()
+
     val isLoading by imageViewModel.isLoading.collectAsState()
     val error by imageViewModel.error.collectAsState()
     val lazyListState = rememberLazyListState()
+
+
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         if (images.isEmpty()) {
@@ -126,10 +140,22 @@ fun MainScreen() {
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(items = images, key = { it.urls.rawUrl }) { image ->
-                    ImageItemCard(image)
+                    ImageItemCard(image, {onImageClick(image)})
                 }
                 item {
-                    if (isLoading) {
+                    if (!isLoading && error != null){
+                        Column(modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally){
+                            Text ("Error: $error")
+                            Spacer(Modifier.height(8.dp))
+                            Button(onClick = {imageViewModel.loadNextPage()}) {
+                                Text("Retry")
+                            }
+                        }
+                    }
+                    else if (isLoading && error != null) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -158,13 +184,64 @@ fun MainScreen() {
 
     }
 }
+
+
+
 @Composable
-fun ImageItemCard(image: ImageItem) {
-    Column(modifier = Modifier.padding(8.dp)) {
+fun ImageItemCard(image: ImageItem, onImageClick: (ImageItem) -> Unit) {
+    Column(modifier = Modifier.padding(8.dp).clickable{onImageClick(image)}) {
+
+
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(image.urls.rawUrl)
+                    .addHeader(
+                        "Authorization",
+                        "Client-ID KkEwtM9jsHnAgL2tukfUW0ywNj900soc99VGKes4MxE"
+                    )
+                    .memoryCacheKey()
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1.5f)
+                    .padding(4.dp),
+                contentScale = ContentScale.Crop
+
+            )
+        }
+
+    }
+
+
+@Composable
+fun MainApp (viewModel: ImageViewModel){
+    var selectedImage by remember { mutableStateOf<ImageItem?>(null)}
+
+    if (selectedImage == null){
+        MainScreen(viewModel){
+            image -> selectedImage = image
+        }
+    }
+    else{
+        OneImageCard(selectedImage!!){
+            selectedImage = null
+        }
+    }
+}
+@Composable
+fun OneImageCard(image: ImageItem,
+                onImageClick: (ImageItem) -> Unit) {
+    Box(modifier = Modifier.fillMaxSize().clickable(){onImageClick(image)}
+        .background(Color.Black)) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(image.urls.rawUrl)
-                .addHeader("Authorization", "Client-ID KkEwtM9jsHnAgL2tukfUW0ywNj900soc99VGKes4MxE")
+                .addHeader(
+                    "Authorization",
+                    "Client-ID KkEwtM9jsHnAgL2tukfUW0ywNj900soc99VGKes4MxE"
+                )
                 .crossfade(true)
                 .build(),
             contentDescription = "Image",
@@ -173,8 +250,7 @@ fun ImageItemCard(image: ImageItem) {
                 .aspectRatio(1.5f)
                 .padding(4.dp),
             contentScale = ContentScale.Crop
+
         )
     }
 }
-
-

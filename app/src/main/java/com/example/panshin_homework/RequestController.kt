@@ -16,11 +16,11 @@ sealed interface Result {
     data class Error(val error: String) : Result
 }
 
-@Serializable
+@kotlinx.serialization.Serializable
 data class Origin(
     @SerialName("raw") val rawUrl:String
 )
-@Serializable
+@kotlinx.serialization.Serializable
 data class ImageItem(
     @SerialName("urls") val urls: Origin
 )
